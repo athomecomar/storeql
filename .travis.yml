@@ -1,0 +1,7 @@
+language: go
+go_import_path: github.com/athomecomar/storeql
+go:
+  - 1.14.x
+
+script:
+  - make check
