@@ -36,6 +36,17 @@ func TestInsertIntoDB(t *testing.T) {
 			},
 		},
 		{
+			name: "successfully multi insert",
+			args: args{
+				storables: []Storable{&storableStub{Name: "foo"}, &storableStub{Name: "foo"}},
+			},
+			wantStorables: []Storable{&storableStub{Name: "foo", Id: 10}, &storableStub{Name: "foo", Id: 20}},
+			stub: &sqlassist.QueryStubber{
+				Expect: "INSERT INTO entities_stub", Rows: sqlmock.NewRows([]string{"id"}).AddRow(10).AddRow(20),
+			},
+		},
+
+		{
 			name: "exec returns err",
 			args: args{
 				storables: []Storable{&storableStub{}},
