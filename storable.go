@@ -17,12 +17,27 @@ type Storable interface {
 	SQLColumns() []string
 }
 
+func sqlColumnValuesWithoutId(storable Storable) string {
+	fValues := []string{}
+	for _, s := range storable.SQLColumns() {
+		if s == "id" {
+			continue
+		}
+		fValues = append(fValues, ":"+s)
+	}
+	return name.Parenthize(strings.Join(fValues, ","))
+}
+
 func sqlColumnValues(storable Storable) string {
 	fValues := []string{}
 	for _, s := range storable.SQLColumns() {
 		fValues = append(fValues, ":"+s)
 	}
 	return name.Parenthize(strings.Join(fValues, ","))
+}
+
+func sqlColumnNamesWithoutId(storable Storable) string {
+	return name.Parenthize(strings.ReplaceAll(strings.Join(storable.SQLColumns(), ","), "id,", ""))
 }
 
 func sqlColumnNames(storable Storable) string {
@@ -80,14 +95,13 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	if len(storables) == 0 {
 		return errNilStorableEntity
 	}
-	ref := storables[0] // takes it as a reference for all entities given
+	ref := storables[0] // takes it as a schema reference for all entities given
 	qr := execBoilerplate("INSERT INTO", ref) + " RETURNING id"
 	ids, err := db.NamedQueryContext(ctx, qr, storables)
 	if err != nil {
 		return errors.Wrap(err, "named query ctx")
 	}
 	defer ids.Close()
-
 	var i int
 	for ids.Next() {
 		var id int64
@@ -126,7 +140,7 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 }
 
 func execBoilerplate(action string, storable Storable) string {
-	return action + ` ` + storable.SQLTable() + ` ` + sqlColumnNames(storable) + ` VALUES ` + sqlColumnValues(storable)
+	return action + ` ` + storable.SQLTable() + ` ` + sqlColumnNamesWithoutId(storable) + ` VALUES ` + sqlColumnValuesWithoutId(storable)
 }
 
 func SQLColumns(storable Storable) []string {

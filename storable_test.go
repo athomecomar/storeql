@@ -126,8 +126,8 @@ func TestUpdateIntoDB(t *testing.T) {
 }
 
 type storableStub struct {
-	Id   int64
-	Name string
+	Id   int64  `json:"id,omitempty"`
+	Name string `json:"name,omitempty"`
 }
 
 func (s *storableStub) GetId() int64 {
