@@ -44,7 +44,7 @@ func sqlColumnNames(storable Storable) string {
 	return name.Parenthize(strings.Join(storable.SQLColumns(), ","))
 }
 
-func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
+func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
 	var inserts, updates []Storable
 	for _, store := range storables {
 		if store.GetId() == 0 {
@@ -55,16 +55,16 @@ func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	}
 	err := UpdateIntoDB(ctx, db, updates...)
 	if err != nil {
-		return errors.Wrap(err, "update into db")
+		return pqErr(errors.Wrap(err, "update into db"))
 	}
 	err = InsertIntoDB(ctx, db, inserts...)
 	if err != nil {
-		return errors.Wrap(err, "insert into db")
+		return pqErr(errors.Wrap(err, "insert into db"))
 	}
 	return nil
 }
 
-func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
+func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
 	qtToStore := len(storables)
 	if qtToStore == 0 {
 		return nil
@@ -74,14 +74,14 @@ func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	qr := execBoilerplate("UPDATE", ref)
 	rows, err := db.NamedExecContext(ctx, qr, storables)
 	if err != nil {
-		return errors.Wrap(err, "named exec ctx")
+		return pqErr(errors.Wrap(err, "named exec ctx"))
 	}
 	rowsQt, err := rows.RowsAffected()
 	if err != nil {
-		return errors.Wrap(err, "rows affected")
+		return pqErr(errors.Wrap(err, "rows affected"))
 	}
 	if int(rowsQt) != qtToStore {
-		return errMismatchAffectedRows
+		return pqErr(errMismatchAffectedRows)
 	}
 	return nil
 }
@@ -91,15 +91,15 @@ var errMismatchAffectedRows = errors.New("the affected rows quantity does not ma
 
 // InsertIntoDB inserts the storable entity to the DB
 // Finally, it assigns the inserted Id to the given entities
-func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
+func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
 	if len(storables) == 0 {
-		return errNilStorableEntity
+		return pqErr(errNilStorableEntity)
 	}
 	ref := storables[0] // takes it as a schema reference for all entities given
 	qr := execBoilerplate("INSERT INTO", ref) + " RETURNING id"
 	ids, err := db.NamedQueryContext(ctx, qr, storables)
 	if err != nil {
-		return errors.Wrap(err, "named query ctx")
+		return pqErr(errors.Wrap(err, "named query ctx"))
 	}
 	defer ids.Close()
 	var i int
@@ -107,20 +107,20 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 		var id int64
 		err := ids.Scan(&id)
 		if err != nil {
-			return errors.Wrap(err, "id scan")
+			return pqErr(errors.Wrap(err, "id scan"))
 		}
 		storables[i].SetId(id)
 		i += 1
 	}
 	err = ids.Err()
 	if err != nil {
-		return errors.Wrap(err, "cursor err")
+		return pqErr(errors.Wrap(err, "cursor err"))
 	}
 
 	return nil
 }
 
-func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
+func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) *PqErr {
 	if storable.GetId() == 0 {
 		return nil
 	}
@@ -134,7 +134,7 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 		storable,
 	)
 	if err != nil {
-		return errors.Wrap(err, "named exec ctx")
+		return pqErr(errors.Wrap(err, "named exec ctx"))
 	}
 	return nil
 }
