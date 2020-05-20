@@ -148,3 +148,29 @@ func (s *storableStub) SQLColumns() []string {
 		"name",
 	}
 }
+
+func Test_execBoilerplate(t *testing.T) {
+	type args struct {
+		action   string
+		storable Storable
+	}
+	tests := []struct {
+		name            string
+		args            args
+		wantBoilerplate string
+	}{
+		{
+			name:            "update basic",
+			args:            args{action: "UPDATE", storable: &storableStub{}},
+			wantBoilerplate: "UPDATE entities_stub SET name=:name WHERE id=:id",
+		},
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotBoilerplate := execBoilerplate(tt.args.action, tt.args.storable); gotBoilerplate != tt.wantBoilerplate {
+				t.Errorf("execBoilerplate() = %v, want %v", gotBoilerplate, tt.wantBoilerplate)
+			}
+		})
+	}
+}

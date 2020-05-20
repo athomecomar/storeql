@@ -37,6 +37,17 @@ func sqlNamedColumnValues(storable Storable) string {
 	return strings.Join(fValues, ", ")
 }
 
+func sqlNamedColumnValuesWithoutId(storable Storable) string {
+	fValues := []string{}
+	for _, s := range storable.SQLColumns() {
+		if s == "id" {
+			continue
+		}
+		fValues = append(fValues, fmt.Sprintf("%s=:%s", s, s))
+	}
+	return strings.Join(fValues, ", ")
+}
+
 func sqlColumnValues(storable Storable) string {
 	fValues := []string{}
 	for _, s := range storable.SQLColumns() {
@@ -153,7 +164,7 @@ func execBoilerplate(action string, storable Storable) (boilerplate string) {
 	case "INSERT INTO":
 		boilerplate = action + ` ` + storable.SQLTable() + ` ` + sqlColumnNamesWithoutId(storable) + ` VALUES ` + sqlColumnValuesWithoutId(storable)
 	case "UPDATE":
-		boilerplate = action + ` ` + storable.SQLTable() + ` SET ` + sqlNamedColumnValues(storable) + ` WHERE id=:id`
+		boilerplate = action + ` ` + storable.SQLTable() + ` SET ` + sqlNamedColumnValuesWithoutId(storable) + ` WHERE id=:id`
 	}
 	return
 }
