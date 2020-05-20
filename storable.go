@@ -2,6 +2,7 @@ package storeql
 
 import (
 	"context"
+	"fmt"
 	"strings"
 
 	"github.com/athomecomar/storeql/name"
@@ -26,6 +27,14 @@ func sqlColumnValuesWithoutId(storable Storable) string {
 		fValues = append(fValues, ":"+s)
 	}
 	return name.Parenthize(strings.Join(fValues, ","))
+}
+
+func sqlNamedColumnValues(storable Storable) string {
+	fValues := []string{}
+	for _, s := range storable.SQLColumns() {
+		fValues = append(fValues, fmt.Sprintf("%s=:%s", s, s))
+	}
+	return strings.Join(fValues, ", ")
 }
 
 func sqlColumnValues(storable Storable) string {
@@ -139,10 +148,12 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 	return nil
 }
 
-func execBoilerplate(action string, storable Storable) string {
-	return action + ` ` + storable.SQLTable() + ` ` + sqlColumnNamesWithoutId(storable) + ` VALUES ` + sqlColumnValuesWithoutId(storable)
-}
-
-func SQLColumns(storable Storable) []string {
-	return storable.SQLColumns()
+func execBoilerplate(action string, storable Storable) (boilerplate string) {
+	switch action {
+	case "INSERT INTO":
+		boilerplate = action + ` ` + storable.SQLTable() + ` ` + sqlColumnNamesWithoutId(storable) + ` VALUES ` + sqlColumnValuesWithoutId(storable)
+	case "UPDATE":
+		boilerplate = action + ` ` + storable.SQLTable() + ` SET ` + sqlNamedColumnValues(storable) + ` WHERE id=:id`
+	}
+	return
 }
