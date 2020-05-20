@@ -44,7 +44,7 @@ func sqlColumnNames(storable Storable) string {
 	return name.Parenthize(strings.Join(storable.SQLColumns(), ","))
 }
 
-func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
+func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
 	var inserts, updates []Storable
 	for _, store := range storables {
 		if store.GetId() == 0 {
@@ -64,7 +64,7 @@ func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqEr
 	return nil
 }
 
-func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
+func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
 	qtToStore := len(storables)
 	if qtToStore == 0 {
 		return nil
@@ -91,7 +91,7 @@ var errMismatchAffectedRows = errors.New("the affected rows quantity does not ma
 
 // InsertIntoDB inserts the storable entity to the DB
 // Finally, it assigns the inserted Id to the given entities
-func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqErr {
+func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
 	if len(storables) == 0 {
 		return pqErr(errNilStorableEntity)
 	}
@@ -120,7 +120,7 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) *PqEr
 	return nil
 }
 
-func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) *PqErr {
+func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 	if storable.GetId() == 0 {
 		return nil
 	}
