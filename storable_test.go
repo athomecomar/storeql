@@ -2,6 +2,7 @@ package storeql
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/DATA-DOG/go-sqlmock"
@@ -71,7 +72,7 @@ func TestInsertIntoDB(t *testing.T) {
 				tt.args.ctx = context.Background()
 			}
 			err := InsertIntoDB(tt.args.ctx, db, tt.args.storables...)
-			if errors.Cause(err) != errors.Cause(tt.wantErr) {
+			if fmt.Sprintf("%v", errors.Cause(err)) != fmt.Sprintf("%v", errors.Cause(tt.wantErr)) {
 				t.Errorf("InsertIntoDB() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if err != nil {
@@ -117,7 +118,7 @@ func TestUpdateIntoDB(t *testing.T) {
 				tt.args.ctx = context.Background()
 			}
 			err := UpdateIntoDB(tt.args.ctx, db, tt.args.storables...)
-			if errors.Cause(err) != errors.Cause(tt.wantErr) {
+			if !errors.Is(err, tt.wantErr) {
 				t.Errorf("UpdateIntoDB() error = %v, wantErr %v", err, tt.wantErr)
 			}
 
@@ -126,15 +127,15 @@ func TestUpdateIntoDB(t *testing.T) {
 }
 
 type storableStub struct {
-	Id   int64  `json:"id,omitempty"`
+	Id   uint64 `json:"id,omitempty"`
 	Name string `json:"name,omitempty"`
 }
 
-func (s *storableStub) GetId() int64 {
+func (s *storableStub) GetId() uint64 {
 	return s.Id
 }
 
-func (s *storableStub) SetId(id int64) {
+func (s *storableStub) SetId(id uint64) {
 	s.Id = id
 }
 

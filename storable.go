@@ -12,8 +12,8 @@ import (
 
 // Storable entity is any entity that can be stored in an SQL database
 type Storable interface {
-	GetId() int64
-	SetId(int64)
+	GetId() uint64
+	SetId(uint64)
 	SQLTable() string
 	SQLColumns() []string
 }
@@ -75,11 +75,11 @@ func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	}
 	err := UpdateIntoDB(ctx, db, updates...)
 	if err != nil {
-		return pqErr(errors.Wrap(err, "update into db"))
+		return errors.Wrap(pqErr(err), "update into db")
 	}
 	err = InsertIntoDB(ctx, db, inserts...)
 	if err != nil {
-		return pqErr(errors.Wrap(err, "insert into db"))
+		return errors.Wrap(pqErr(err), "insert into db")
 	}
 	return nil
 }
@@ -94,11 +94,11 @@ func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	qr := execBoilerplate("UPDATE", ref)
 	rows, err := db.NamedExecContext(ctx, qr, storables)
 	if err != nil {
-		return pqErr(errors.Wrap(err, "named exec ctx"))
+		return errors.Wrap(pqErr(err), "named exec ctx")
 	}
 	rowsQt, err := rows.RowsAffected()
 	if err != nil {
-		return pqErr(errors.Wrap(err, "rows affected"))
+		return errors.Wrap(pqErr(err), "rows affected")
 	}
 	if int(rowsQt) != qtToStore {
 		return pqErr(errMismatchAffectedRows)
@@ -119,22 +119,22 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	qr := execBoilerplate("INSERT INTO", ref) + " RETURNING id"
 	ids, err := db.NamedQueryContext(ctx, qr, storables)
 	if err != nil {
-		return pqErr(errors.Wrap(err, "named query ctx"))
+		return errors.Wrap(pqErr(err), "named query ctx")
 	}
 	defer ids.Close()
 	var i int
 	for ids.Next() {
-		var id int64
+		var id uint64
 		err := ids.Scan(&id)
 		if err != nil {
-			return pqErr(errors.Wrap(err, "id scan"))
+			return errors.Wrap(pqErr(err), "id scan")
 		}
 		storables[i].SetId(id)
 		i += 1
 	}
 	err = ids.Err()
 	if err != nil {
-		return pqErr(errors.Wrap(err, "cursor err"))
+		return errors.Wrap(pqErr(err), "cursor err")
 	}
 
 	return nil
@@ -154,7 +154,7 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 		storable,
 	)
 	if err != nil {
-		return pqErr(errors.Wrap(err, "named exec ctx"))
+		return errors.Wrap(pqErr(err), "named exec ctx")
 	}
 	return nil
 }
