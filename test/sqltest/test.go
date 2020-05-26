@@ -13,7 +13,9 @@ import (
 )
 
 func TestSQLColumns(t *testing.T, s storeql.Storable, message string) {
-	typeOf := reflect.TypeOf(s)
+	valueOf := reflect.Indirect(reflect.ValueOf(s))
+	typeOf := valueOf.Type()
+
 	var want []string
 	for i := 0; i < typeOf.NumField(); i++ {
 		field := typeOf.Field(i)
@@ -30,8 +32,8 @@ func TestSQLColumns(t *testing.T, s storeql.Storable, message string) {
 }
 
 func TestSQLMap(t *testing.T, s storeql.Storable, message string) {
-	valueOf := reflect.ValueOf(s)
-	typeOf := reflect.TypeOf(s)
+	valueOf := reflect.Indirect(reflect.ValueOf(s))
+	typeOf := valueOf.Type()
 
 	wantMap := make(map[string]driver.Value)
 	for i := 0; i < typeOf.NumField(); i++ {
@@ -49,10 +51,12 @@ func TestSQLMap(t *testing.T, s storeql.Storable, message string) {
 }
 
 func TestSQLTable(t *testing.T, s storeql.Storable, message string) {
-	typeOf := reflect.TypeOf(s)
+	valueOf := reflect.Indirect(reflect.ValueOf(s))
+	typeOf := valueOf.Type()
+
 	want := inflector.Pluralize(name.ToSnakeCase(typeOf.Name()))
 	got := s.SQLTable()
-	if diff := cmp.Diff(got, want); diff != "" {
+	if diff := cmp.Diff(want, got); diff != "" {
 		t.Errorf("%s.SQLTable() mismatch (-want +got): %s", message, diff)
 	}
 }
