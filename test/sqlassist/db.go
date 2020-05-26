@@ -9,6 +9,7 @@ import (
 
 // ExecStubber is the actor which performs stubs of db.Exec()
 type ExecStubber struct {
+	Args   []driver.Value
 	Expect string
 	Err    error
 	Result driver.Result
@@ -17,16 +18,19 @@ type ExecStubber struct {
 // QueryStubber is the actor which performs stubs of db.Query()
 type QueryStubber struct {
 	Expect string
+	Args   []driver.Value
 	Err    error
 	Rows   *sqlmock.Rows
 }
 
 // Stub stubs the execution with the given mock
 // It uses .Err to provide connection errs, and Result to stub the desired output on caller
-func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock, args ...driver.Value) *sqlmock.ExpectedExec {
+func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedExec {
 	exec.Expect = regexp.QuoteMeta(exec.Expect)
 	expect := mock.ExpectExec(exec.Expect)
-	expect = expect.WithArgs(args...)
+	if exec.Args != nil {
+		expect = expect.WithArgs(exec.Args...)
+	}
 	if exec.Err != nil {
 		return expect.WillReturnError(exec.Err)
 	}
@@ -35,10 +39,12 @@ func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock, args ...driver.Value) *sqlmo
 
 // Stub stubs the query with the given mock
 // It uses .Err to provide connection errs, and Rows to stub the desired output on caller
-func (query *QueryStubber) Stub(mock sqlmock.Sqlmock, args ...driver.Value) *sqlmock.ExpectedQuery {
+func (query *QueryStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
 	query.Expect = regexp.QuoteMeta(query.Expect)
 	expect := mock.ExpectQuery(query.Expect)
-	expect = expect.WithArgs(args...)
+	if query.Args != nil {
+		expect = expect.WithArgs(query.Args...)
+	}
 	if query.Err != nil {
 		return expect.WillReturnError(query.Err)
 	}
