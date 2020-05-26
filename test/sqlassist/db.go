@@ -23,9 +23,10 @@ type QueryStubber struct {
 
 // Stub stubs the execution with the given mock
 // It uses .Err to provide connection errs, and Result to stub the desired output on caller
-func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedExec {
+func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock, args ...driver.Value) *sqlmock.ExpectedExec {
 	exec.Expect = regexp.QuoteMeta(exec.Expect)
 	expect := mock.ExpectExec(exec.Expect)
+	expect = expect.WithArgs(args...)
 	if exec.Err != nil {
 		return expect.WillReturnError(exec.Err)
 	}
@@ -34,9 +35,10 @@ func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedExec {
 
 // Stub stubs the query with the given mock
 // It uses .Err to provide connection errs, and Rows to stub the desired output on caller
-func (query *QueryStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
+func (query *QueryStubber) Stub(mock sqlmock.Sqlmock, args ...driver.Value) *sqlmock.ExpectedQuery {
 	query.Expect = regexp.QuoteMeta(query.Expect)
 	expect := mock.ExpectQuery(query.Expect)
+	expect = expect.WithArgs(args...)
 	if query.Err != nil {
 		return expect.WillReturnError(query.Err)
 	}
