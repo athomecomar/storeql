@@ -2,6 +2,7 @@ package storeql
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"strings"
 
@@ -15,12 +16,26 @@ type Storable interface {
 	GetId() uint64
 	SetId(uint64)
 	SQLTable() string
-	SQLColumns() []string
+	SQLMap() map[string]driver.Value
+}
+
+func SQLColumns(s Storable) (cols []string) {
+	for key := range s.SQLMap() {
+		cols = append(cols, key)
+	}
+	return
+}
+
+func SQLValues(s Storable) (vals []driver.Value) {
+	for _, val := range s.SQLMap() {
+		vals = append(vals, val)
+	}
+	return
 }
 
 func sqlColumnValuesWithoutId(storable Storable) string {
 	fValues := []string{}
-	for _, s := range storable.SQLColumns() {
+	for _, s := range SQLColumns(storable) {
 		if s == "id" {
 			continue
 		}
@@ -31,7 +46,7 @@ func sqlColumnValuesWithoutId(storable Storable) string {
 
 func sqlNamedColumnValues(storable Storable) string {
 	fValues := []string{}
-	for _, s := range storable.SQLColumns() {
+	for _, s := range SQLColumns(storable) {
 		fValues = append(fValues, fmt.Sprintf("%s=:%s", s, s))
 	}
 	return strings.Join(fValues, ", ")
@@ -39,7 +54,7 @@ func sqlNamedColumnValues(storable Storable) string {
 
 func sqlNamedColumnValuesWithoutId(storable Storable) string {
 	fValues := []string{}
-	for _, s := range storable.SQLColumns() {
+	for _, s := range SQLColumns(storable) {
 		if s == "id" {
 			continue
 		}
@@ -50,18 +65,18 @@ func sqlNamedColumnValuesWithoutId(storable Storable) string {
 
 func sqlColumnValues(storable Storable) string {
 	fValues := []string{}
-	for _, s := range storable.SQLColumns() {
+	for _, s := range SQLColumns(storable) {
 		fValues = append(fValues, ":"+s)
 	}
 	return name.Parenthize(strings.Join(fValues, ","))
 }
 
 func sqlColumnNamesWithoutId(storable Storable) string {
-	return name.Parenthize(strings.ReplaceAll(strings.Join(storable.SQLColumns(), ","), "id,", ""))
+	return name.Parenthize(strings.ReplaceAll(strings.Join(SQLColumns(storable), ","), "id,", ""))
 }
 
 func sqlColumnNames(storable Storable) string {
-	return name.Parenthize(strings.Join(storable.SQLColumns(), ","))
+	return name.Parenthize(strings.Join(SQLColumns(storable), ","))
 }
 
 func UpsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {

@@ -2,6 +2,7 @@ package storeql
 
 import (
 	"context"
+	"database/sql/driver"
 	"fmt"
 	"testing"
 
@@ -143,10 +144,10 @@ func (s *storableStub) SQLTable() string {
 	return "entities_stub"
 }
 
-func (s *storableStub) SQLColumns() []string {
-	return []string{
-		"id",
-		"name",
+func (s *storableStub) SQLMap() map[string]driver.Value {
+	return map[string]driver.Value{
+		"id":   s.Id,
+		"name": s.Name,
 	}
 }
 
