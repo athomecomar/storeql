@@ -2,6 +2,7 @@ package sqltest
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"reflect"
 	"sort"
 	"testing"
@@ -12,7 +13,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestSQLColumns(t *testing.T, s storeql.Storable, message string) {
+func SQLColumns(t *testing.T, s storeql.Storable, message string) {
 	valueOf := reflect.Indirect(reflect.ValueOf(s))
 	typeOf := valueOf.Type()
 
@@ -31,7 +32,7 @@ func TestSQLColumns(t *testing.T, s storeql.Storable, message string) {
 	}
 }
 
-func TestSQLMap(t *testing.T, s storeql.Storable, message string) {
+func SQLMap(t *testing.T, s storeql.Storable, message string) {
 	valueOf := reflect.Indirect(reflect.ValueOf(s))
 	typeOf := valueOf.Type()
 
@@ -44,13 +45,14 @@ func TestSQLMap(t *testing.T, s storeql.Storable, message string) {
 		wantMap[wantCol] = fieldValue
 	}
 
-	sqlMap := s.SQLMap()
-	if diff := cmp.Diff(sqlMap, wantMap); diff != "" {
-		t.Errorf("%s.SQLMap() mismatch (-want +got): %s", message, diff)
+	for k, v := range s.SQLMap() {
+		if fmt.Sprintf("%v", v) != fmt.Sprintf("%v", wantMap[k]) {
+			t.Errorf("%s.SQLColumns() mismatch (-want +got): %v, %v", message, v, wantMap[k])
+		}
 	}
 }
 
-func TestSQLTable(t *testing.T, s storeql.Storable, message string) {
+func SQLTable(t *testing.T, s storeql.Storable, message string) {
 	valueOf := reflect.Indirect(reflect.ValueOf(s))
 	typeOf := valueOf.Type()
 
