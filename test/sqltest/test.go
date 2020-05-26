@@ -13,6 +13,12 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
+func SQL(t *testing.T, s storeql.Storable, message string) {
+	SQLTable(t, s, message)
+	SQLColumns(t, s, message)
+	SQLMap(t, s, message)
+}
+
 func SQLColumns(t *testing.T, s storeql.Storable, message string) {
 	valueOf := reflect.Indirect(reflect.ValueOf(s))
 	typeOf := valueOf.Type()
