@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/athomecomar/storeql/name"
@@ -23,12 +24,16 @@ func SQLColumns(s Storable) (cols []string) {
 	for key := range s.SQLMap() {
 		cols = append(cols, key)
 	}
+	sort.Strings(cols)
 	return
 }
 
 func SQLValues(s Storable) (vals []driver.Value) {
-	for _, val := range s.SQLMap() {
-		vals = append(vals, val)
+	sqlMap := s.SQLMap()
+	cols := SQLColumns(s)
+
+	for _, col := range cols {
+		vals = append(vals, sqlMap[col])
 	}
 	return
 }
@@ -171,6 +176,7 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 	if err != nil {
 		return errors.Wrap(pqErr(err), "named exec ctx")
 	}
+
 	return nil
 }
 
