@@ -23,3 +23,5 @@ func (err *PqErr) Is(errChecker func(error) *pq.Error) bool {
 func (err *PqErr) Error() string {
 	return err.err.Error()
 }
+
+var ErrNoId = errors.New("storable entity given has no id")

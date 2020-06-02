@@ -162,7 +162,7 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 
 func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 	if storable.GetId() == 0 {
-		return nil
+		return ErrNoId
 	}
 
 	if ctx == nil {
