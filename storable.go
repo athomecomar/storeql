@@ -160,18 +160,26 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	return nil
 }
 
-func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
-	if storable.GetId() == 0 {
-		return ErrNoId
+func DeleteFromDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error {
+	if len(storables) == 0 {
+		return pqErr(errNilStorableEntity)
 	}
+	for _, storable := range storables {
+		if storable.GetId() == 0 {
+			return ErrNoId
+		}
+	}
+
+	ref := storables[0]
 
 	if ctx == nil {
 		ctx = context.Background()
 	}
+
 	_, err := db.NamedExecContext(
 		ctx,
-		`DELETE FROM `+storable.SQLTable()+` WHERE id=:id`,
-		storable,
+		`DELETE FROM `+ref.SQLTable()+` WHERE id=:id`,
+		storables,
 	)
 	if err != nil {
 		return errors.Wrap(pqErr(err), "named exec ctx")
