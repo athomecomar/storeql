@@ -84,12 +84,16 @@ func sqlColumnNames(storable Storable) string {
 	return name.Parenthize(strings.Join(SQLColumns(storable), ","))
 }
 
+func WhereStmt(storable Storable, whereClause string) string {
+	return `SELECT * FROM ` + storable.SQLTable() + ` WHERE ` + whereClause
+}
+
 func Where(ctx context.Context, db *sqlx.DB, storable Storable, whereClause string, args ...interface{}) *sqlx.Row {
-	return db.QueryRowxContext(ctx, `SELECT * FROM `+storable.SQLTable()+` WHERE `+whereClause, args...)
+	return db.QueryRowxContext(ctx, WhereStmt(storable, whereClause), args...)
 }
 
 func WhereMany(ctx context.Context, db *sqlx.DB, storable Storable, whereClause string, args ...interface{}) (*sqlx.Rows, error) {
-	rows, err := db.QueryxContext(ctx, `SELECT * FROM `+storable.SQLTable()+` WHERE `+whereClause, args...)
+	rows, err := db.QueryxContext(ctx, WhereStmt(storable, whereClause), args...)
 	if err != nil {
 		return nil, errors.Wrap(err, "QueryxContext")
 	}
