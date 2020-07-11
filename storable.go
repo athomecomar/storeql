@@ -91,7 +91,7 @@ func UpdateIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 	}
 
 	ref := storables[0] // takes it as a reference for all entities given
-	qr := execBoilerplate("UPDATE", ref)
+	qr := ExecBoilerplate("UPDATE", ref)
 	rows, err := db.NamedExecContext(ctx, qr, storables)
 	if err != nil {
 		return errors.Wrap(pqErr(err), "named exec ctx")
@@ -116,7 +116,7 @@ func InsertIntoDB(ctx context.Context, db *sqlx.DB, storables ...Storable) error
 		return pqErr(errNilStorableEntity)
 	}
 	ref := storables[0] // takes it as a schema reference for all entities given
-	qr := execBoilerplate("INSERT INTO", ref) + " RETURNING id"
+	qr := ExecBoilerplate("INSERT INTO", ref) + " RETURNING id"
 	ids, err := db.NamedQueryContext(ctx, qr, storables)
 	if err != nil {
 		return errors.Wrap(pqErr(err), "named query ctx")
@@ -159,7 +159,7 @@ func DeleteFromDB(ctx context.Context, db *sqlx.DB, storable Storable) error {
 	return nil
 }
 
-func execBoilerplate(action string, storable Storable) (boilerplate string) {
+func ExecBoilerplate(action string, storable Storable) (boilerplate string) {
 	switch action {
 	case "INSERT INTO":
 		boilerplate = action + ` ` + storable.SQLTable() + ` ` + sqlColumnNamesWithoutId(storable) + ` VALUES ` + sqlColumnValuesWithoutId(storable)
