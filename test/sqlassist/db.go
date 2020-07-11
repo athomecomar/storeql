@@ -9,6 +9,7 @@ import (
 
 // ExecStubber is the actor which performs stubs of db.Exec()
 type ExecStubber struct {
+	Args   []driver.Value
 	Expect string
 	Err    error
 	Result driver.Result
@@ -17,6 +18,7 @@ type ExecStubber struct {
 // QueryStubber is the actor which performs stubs of db.Query()
 type QueryStubber struct {
 	Expect string
+	Args   []driver.Value
 	Err    error
 	Rows   *sqlmock.Rows
 }
@@ -26,6 +28,9 @@ type QueryStubber struct {
 func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedExec {
 	exec.Expect = regexp.QuoteMeta(exec.Expect)
 	expect := mock.ExpectExec(exec.Expect)
+	if exec.Args != nil {
+		expect = expect.WithArgs(exec.Args...)
+	}
 	if exec.Err != nil {
 		return expect.WillReturnError(exec.Err)
 	}
@@ -37,6 +42,9 @@ func (exec *ExecStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedExec {
 func (query *QueryStubber) Stub(mock sqlmock.Sqlmock) *sqlmock.ExpectedQuery {
 	query.Expect = regexp.QuoteMeta(query.Expect)
 	expect := mock.ExpectQuery(query.Expect)
+	if query.Args != nil {
+		expect = expect.WithArgs(query.Args...)
+	}
 	if query.Err != nil {
 		return expect.WillReturnError(query.Err)
 	}
